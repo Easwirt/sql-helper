@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: postgres_db
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppassword
+      POSTGRES_DB: app_database
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d app_database"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  fastapi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sql_agent_api
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://appuser:apppassword@postgres:5432/app_database
+      DATABASE_SCHEMA: public
+      OPENAI_MODEL: gpt-4o-mini
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sql_agent_ui
+    command:
+      [
+        "uv",
+        "run",
+        "streamlit",
+        "run",
+        "streamlit_app.py",
+        "--server.address=0.0.0.0",
+        "--server.port=8501",
+      ]
+    env_file:
+      - .env
+    environment:
+      STREAMLIT_API_URL: http://fastapi:8000/chat
+    ports:
+      - "8501:8501"
+    depends_on:
+      fastapi:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
