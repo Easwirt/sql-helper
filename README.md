@@ -2,7 +2,9 @@
 
 A chat tool that lets finance users ask plain-English questions about accrual transactions. No SQL knowledge needed.
 
----
+### Look at the demo
+
+[Click here](https://youtu.be/0EIBBn42cY8)
 
 ## 1. How to Run
 
@@ -26,7 +28,7 @@ cp .env.example .env
 docker compose up --build
 
 # 4. Load the data (first time only)
-docker compose exec api python scripts/ingest.py
+docker compose exec fastapi uv run python -m scripts.ingest
 
 # 5. Open the app
 # Streamlit UI → http://localhost:8501
@@ -94,8 +96,8 @@ docker compose exec api pytest tests/
 - Move session storage to a database (Redis or Postgres)
 - Add proper login and server-side role control
 - Write more unit tests for the validator and the agent loop
-- Move row-level security into the database itself (Postgres RLS policies)
 - Support more tables as the schema grows
+- Add semantic caching
 
 ---
 
@@ -114,9 +116,3 @@ By the end, the architecture was more complex than I planned, but each layer has
 - The model decides what to ask
 - The validator decides what is safe to run
 - The MCP server decides how to run it
-
----
-
-## Look at the demo
-
-link
